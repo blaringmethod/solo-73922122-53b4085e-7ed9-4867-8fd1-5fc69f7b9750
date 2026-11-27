@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}核对指令 #{{ instruction.id }} · 展厅换牌{% endblock %}
+{% block content %}
+<h1>核对指令 #{{ instruction.id }}</h1>
+
+<dl class="facts">
+  <div><dt>方案</dt><dd>#{{ plan.id }}</dd></div>
+  <div><dt>第几步</dt><dd>{{ instruction.step_index + 1 }}</dd></div>
+  <div><dt>指令状态</dt><dd><span class="status status-{{ instruction.status }}">{{ instruction.status|ins_label }}</span></dd></div>
+</dl>
+
+<section class="card {% if instruction.status == 'pending' %}highlight{% endif %}">
+  <h2>换牌指令</h2>
+  <p class="big-swap"><span>{{ instruction.from_number }}</span> → <span>{{ instruction.to_number }}</span></p>
+  <p>展品：「{{ instruction.explanation }}」</p>
+
+  {% if instruction.status == 'pending' %}
+    <p class="hint">
+      把展品换到 <strong>{{ instruction.to_number }}</strong> 号后，填写现场看到的牌号：
+      看到新号 {{ instruction.to_number }} 即确认；看到旧号 {{ instruction.from_number }} 即撤回本次指令；
+      其他号码会报错并保留待核对。
+    </p>
+    <form method="post" action="{{ url_for('main.report_instruction', instruction_id=instruction.id) }}" class="report-form">
+      <label for="number">现场看到的牌号</label>
+      <input id="number" name="number" inputmode="numeric" autocomplete="off" autofocus required>
+      <button class="button primary" type="submit">提交核对</button>
+    </form>
+  {% else %}
+    <div class="banner {% if instruction.status == 'confirmed' %}ok{% else %}warn{% endif %}">
+      本指令{{ instruction.status|ins_label }}，现场牌号为
+      {{ instruction.observed_number if instruction.observed_number is not none else '—' }}。
+      重复上报不会改动后续指令或查号结果。
+    </div>
+    <p><a class="button" href="{{ url_for('main.plan_detail', plan_id=plan.id) }}">返回方案</a></p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>上报记录</h2>
+  {% if reports %}
+    <table class="grid">
+      <thead><tr><th>填写内容</th><th>解析号码</th><th>结果</th><th>时间</th></tr></thead>
+      <tbody>
+        {% for r in reports %}
+          <tr>
+            <td>{{ r.reported_text }}</td>
+            <td>{{ r.reported_number if r.reported_number is not none else '—' }}</td>
+            <td>{{ r.result }}</td>
+            <td>{{ r.created_at|friendly_time }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">还没有上报记录。</p>
+  {% endif %}
+</section>
+{% endblock %}

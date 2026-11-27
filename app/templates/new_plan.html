@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}录入新方案 · 展厅换牌{% endblock %}
+{% block content %}
+<h1>录入新方案</h1>
+
+<div class="card">
+  <p class="hint">
+    最多 {{ max_exhibits }} 件展品。现号与目标号必须是同一组号码，且各自不重复；
+    另填一个当前空闲、且不作任何目标号的临时号。系统会自动算出最少换牌次数。
+  </p>
+  <form method="post" action="{{ url_for('main.create_plan') }}" id="plan-form">
+    <table class="grid entry">
+      <thead>
+        <tr><th>#</th><th>讲解词</th><th>现号</th><th>目标号</th></tr>
+      </thead>
+      <tbody id="exhibit-rows">
+        {% set form_rows = form.getlist('explanation') if form else [] %}
+        {% for i in range(max_exhibits) %}
+          {% set ex = form_rows[i] if form_rows|length > i else '' %}
+          {% set cur = form.getlist('current_number')[i] if form and form.getlist('current_number')|length > i else '' %}
+          {% set tgt = form.getlist('target_number')[i] if form and form.getlist('target_number')|length > i else '' %}
+          <tr>
+            <td class="rowno">{{ i + 1 }}</td>
+            <td><textarea name="explanation" rows="2" placeholder="例：青铜鼎，商代晚期，用于祭祀">{{ ex }}</textarea></td>
+            <td><input name="current_number" inputmode="numeric" value="{{ cur }}" size="6"></td>
+            <td><input name="target_number" inputmode="numeric" value="{{ tgt }}" size="6"></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="temp-row">
+      <label for="temp_number">临时号</label>
+      <input id="temp_number" name="temp_number" inputmode="numeric" size="6"
+             value="{{ form.get('temp_number', '') if form else '' }}" required>
+      <span class="hint">该号必须空闲，且不能出现在任何目标号中。</span>
+    </div>
+
+    <div class="actions">
+      <button class="button primary" type="submit">生成方案</button>
+      <a class="button" href="{{ url_for('main.clerk') }}">返回</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

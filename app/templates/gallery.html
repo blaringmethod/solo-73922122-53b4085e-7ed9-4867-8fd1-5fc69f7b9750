@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}游客查号 · 展厅换牌{% endblock %}
+{% block content %}
+<h1>按号码查讲解</h1>
+
+{% if not plan %}
+  <div class="card muted">
+    <p>当前没有可查询的方案。请馆员先录入展品与号码。</p>
+  </div>
+{% else %}
+  <div class="card">
+    <p class="hint">
+      请按墙上看到的号码查询讲解。换牌进行中时，正在更换的号码会提示「换牌中」，
+      可先查其他号码，稍后再试。
+    </p>
+    <div class="number-grid">
+      {% for n in numbers %}
+        <a class="number-chip {% if n == plan.temp_number %}temp{% endif %}"
+           href="{{ url_for('main.gallery_lookup', number=n, plan=plan.id) }}">{{ n }}</a>
+      {% endfor %}
+    </div>
+
+    <form method="get" action="{{ url_for('main.gallery_lookup') }}" class="lookup-form">
+      <input type="hidden" name="plan" value="{{ plan.id }}">
+      <label for="number">或直接输入号码</label>
+      <input id="number" name="number" inputmode="numeric" size="8"
+             value="{{ query or '' }}" autocomplete="off" required>
+      <button class="button primary" type="submit">查讲解</button>
+    </form>
+  </div>
+
+  {% if error %}
+    <div class="banner warn">{{ error }}</div>
+  {% endif %}
+
+  {% if result %}
+    <section class="card result result-{{ result.kind }}">
+      {% if result.kind == 'found' %}
+        <p class="result-head">号码 <strong>{{ result.query }}</strong> · {{ result.exhibit.explanation[:20] }}{% if result.exhibit.explanation|length > 20 %}…{% endif %}</p>
+        <article class="explanation">
+          <h2>{{ result.query }} 号展品</h2>
+          <p>{{ result.exhibit.explanation }}</p>
+        </article>
+      {% elif result.kind == 'swapping' %}
+        <div class="banner warn">
+          <p class="result-head">号码 <strong>{{ result.query }}</strong></p>
+          <p>该号正在换牌中，暂时无法提供讲解。请稍后再试，或先查询其他号码。</p>
+        </div>
+      {% elif result.kind == 'empty' %}
+        <div class="banner info">
+          <p class="result-head">号码 <strong>{{ result.query }}</strong></p>
+          <p>这是当前的临时空号，尚未挂上展品。请稍后再试。</p>
+        </div>
+      {% else %}
+        <div class="banner warn">
+          <p class="result-head">号码 <strong>{{ result.query }}</strong></p>
+          <p>本展厅没有这个号码，请核对墙上号码后重新输入。</p>
+        </div>
+      {% endif %}
+    </section>
+  {% endif %}
+{% endif %}
+{% endblock %}

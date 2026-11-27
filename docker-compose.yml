@@ -1,0 +1,15 @@
+services:
+  gallery:
+    build: .
+    image: gallery-plates:local
+    ports:
+      - "8080:8000"
+    environment:
+      DATABASE_PATH: /data/gallery.db
+      SECRET_KEY: change-me-in-production
+    volumes:
+      - gallery-data:/data
+    restart: unless-stopped
+
+volumes:
+  gallery-data:
